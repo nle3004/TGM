@@ -1,23 +1,25 @@
 let map, marker;
 
+// Replace these with your GitHub repository details
+const GITHUB_REPO_OWNER = "nle3004";
+const GITHUB_REPO_NAME = "TGM";
+const GITHUB_PAT = "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"; // Generate this in GitHub Settings
+
 document.addEventListener("DOMContentLoaded", () => {
   const reviewForm = document.getElementById("reviewForm");
   const reviewsList = document.getElementById("reviewsList");
 
-  // Load existing reviews from localStorage
-  let reviews = JSON.parse(localStorage.getItem("reviews")) || [];
+  let reviews = [];
 
   // Initialize Leaflet Map
   function initMap() {
     map = L.map("map").setView([3.0738, 101.6059], 12); // Default to Petaling Jaya, Selangor, Malaysia
 
-    // Add OpenStreetMap tiles
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map);
 
-    // Add Geocoder (search bar)
     const geocoder = L.Control.geocoder({
       defaultMarkGeocode: false,
     }).addTo(map);
@@ -27,22 +29,70 @@ document.addEventListener("DOMContentLoaded", () => {
       placeMarker(center);
     });
 
-    // Add a click event listener to the map
     map.on("click", (event) => {
       placeMarker(event.latlng);
     });
   }
 
-  // Place a marker on the map and update hidden fields
   function placeMarker(location) {
     if (marker) {
-      map.removeLayer(marker); // Remove existing marker
+      map.removeLayer(marker);
     }
     marker = L.marker(location).addTo(map);
 
-    // Update hidden fields with latitude and longitude
     document.getElementById("latitude").value = location.lat;
     document.getElementById("longitude").value = location.lng;
+  }
+
+  // Fetch reviews from GitHub
+  async function fetchReviews() {
+    try {
+      const response = await fetch(
+        `https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/contents/reviews.json`
+      );
+      const data = await response.json();
+      const decodedContent = atob(data.content); // Decode Base64 content
+      reviews = JSON.parse(decodedContent);
+      displayReviews();
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+    }
+  }
+
+  // Save reviews to GitHub
+  async function saveReviews() {
+    try {
+      const response = await fetch(
+        `https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/contents/reviews.json`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `token ${GITHUB_PAT}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: "Update reviews",
+            content: btoa(JSON.stringify(reviews)), // Encode to Base64
+            sha: await getReviewsSHA(), // Get the current SHA of the file
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to save reviews: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error("Error saving reviews:", error);
+    }
+  }
+
+  // Get the current SHA of the reviews.json file
+  async function getReviewsSHA() {
+    const response = await fetch(
+      `https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/contents/reviews.json`
+    );
+    const data = await response.json();
+    return data.sha;
   }
 
   // Display reviews on page load
@@ -65,21 +115,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Save reviews to localStorage
-  function saveReviews() {
-    localStorage.setItem("reviews", JSON.stringify(reviews));
-  }
-
   // Handle form submission
-  reviewForm.addEventListener("submit", (e) => {
+  reviewForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const restaurantName = document.getElementById("restaurantName").value;
     const recommendedFood = document.getElementById("recommendedFood").value
-      .split("\n") // Split by newline
-      .filter(item => item.trim() !== "") // Remove empty lines
-      .map(item => `- ${item}`) // Add bullet points
-      .join("\n"); // Join back into a single string
+      .split("\n")
+      .filter(item => item.trim() !== "")
+      .map(item => `- ${item}`)
+      .join("\n");
 
     const rating = parseInt(document.getElementById("rating").value);
     const price = parseInt(document.getElementById("price").value);
@@ -110,22 +155,20 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     reviews.push(newReview);
-    saveReviews();
+    await saveReviews();
     displayReviews();
 
-    // Clear form fields
     reviewForm.reset();
-    if (marker) map.removeLayer(marker); // Clear the marker
+    if (marker) map.removeLayer(marker);
   });
 
-  // Delete a review
-  window.deleteReview = (index) => {
+  window.deleteReview = async (index) => {
     reviews.splice(index, 1);
-    saveReviews();
+    await saveReviews();
     displayReviews();
   };
 
-  // Initialize map and display reviews
+  // Initialize map and fetch reviews
   initMap();
-  displayReviews();
+  fetchReviews();
 });
