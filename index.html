@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Food Review Website</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <!-- Leaflet Geocoder CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+</head>
+<body>
+  <div class="container">
+    <!-- Image at the top -->
+    <div class="header-image">
+      <img src="images/profile.jpg" alt="Profile Image" class="profile-image">
+    </div>
+
+    <h1>TGM Food Review Form</h1>
+    <form id="reviewForm">
+      <label for="restaurantName">Name of Restaurant:</label>
+      <input type="text" id="restaurantName" name="restaurantName" required>
+
+      <label for="recommendedFood">Recommended Food:</label>
+      <textarea id="recommendedFood" name="recommendedFood" rows="4" placeholder="Enter one item per line..." required></textarea>
+
+      <label for="rating">Rating (1-5):</label>
+      <input type="number" id="rating" name="rating" min="1" max="5" required>
+
+      <label for="price">Price (1-5):</label>
+      <input type="number" id="price" name="price" min="1" max="5" required>
+
+      <label for="ambience">Ambience (1-5):</label>
+      <input type="number" id="ambience" name="ambience" min="1" max="5" required>
+
+      <label for="lastVisited">Last Visited Date:</label>
+      <input type="date" id="lastVisited" name="lastVisited" required>
+
+      <label>Restaurant Location:</label>
+      <input type="text" id="searchBar" placeholder="Enter a location..." />
+      <div id="map" style="height: 300px; margin-top: 10px;"></div>
+      <input type="hidden" id="latitude" name="latitude">
+      <input type="hidden" id="longitude" name="longitude">
+
+      <button type="submit">Submit Review</button>
+    </form>
+
+    <h2>Reviews</h2>
+    <div id="reviewsList"></div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- Leaflet Geocoder JS -->
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
